@@ -86,41 +86,41 @@ func (b *Bill) makeHeader() func() {
 		billTime := now.New(now.MustParse(b.config.Bill.Date))
 
 		b.pdf.SetFont(b.config.Business.SansFont, "BI", 28)
-		b.pdf.ImageOptions(b.config.Business.ImageFile, 0, 10, 100, 0, false, gofpdf.ImageOptions{}, 0, "")
+		b.pdf.ImageOptions(b.config.AssetsDir + "/" + b.config.Business.ImageFile, 0, 10, 100, 0, false, gofpdf.ImageOptions{}, 0, "")
 
 		// Invoice Text
-		b.pdf.SetXY(140, 30)
+		b.pdf.SetXY(140, 40)
 		b.darkText()
 		b.text(40, 0, "Invoice")
 
 		// Date and Invoice #
-		b.pdf.SetXY(140, 40)
+		b.pdf.SetXY(140, 50)
 		b.darkText()
 		b.pdf.SetFont(b.config.Business.SerifFont, "", 12)
 		b.text(20, 0, "Date:")
 		b.lightText()
 		b.text(20, 0, billTime.EndOfMonth().Format("January 2, 2006"))
 
-		b.pdf.SetXY(140, 45)
+		b.pdf.SetXY(140, 55)
 		b.darkText()
 		b.text(20, 0, "Invoice #:")
 		b.lightText()
 		b.text(20, 0, billTime.EndOfMonth().Format("Jan22006"))
 
 		// Biller Name, Address
-		b.pdf.SetXY(8, 40)
+		b.pdf.SetXY(8, 50)
 		b.darkText()
 		b.pdf.SetFont(b.config.Business.SerifFont, "B", 14)
-		b.text(40, 0, b.config.Business.Person)
+		b.text(40, 0, b.config.Business.Name + " - c/o " + b.config.Business.Person)
 
 		b.pdf.SetFont(b.config.Business.SerifFont, "", 10)
-		b.pdf.SetXY(8, 45)
+		b.pdf.SetXY(8, 55)
 		b.text(40, 0, b.config.Business.Address)
 
 		// Line Break
 		b.pdf.Ln(10)
 		b.darkDrawColor()
-		b.pdf.Line(8, 50, 200, 50)
+		b.pdf.Line(8, 60, 200, 60)
 	}
 }
 
@@ -156,8 +156,8 @@ func (b *Bill) RenderToFile() error {
 	// It's safe to MustParse here because we validate args earlier
 	billTime := now.New(now.MustParse(b.config.Bill.Date))
 
-	outFileName := b.config.OutputDir + "/" + b.config.Business.Person + "-" +
-		strings.ToUpper(billTime.EndOfMonth().Format("Jan022006")) + ".pdf"
+	outFileName := b.config.OutputDir + "/"+ strings.ReplaceAll(b.config.BillTo.Name, " ", "_") +
+    "-" +	strings.ToUpper(billTime.EndOfMonth().Format("Jan022006")) + ".pdf"
 
 	err := b.pdf.OutputFileAndClose(outFileName)
 	if err != nil {
@@ -175,10 +175,10 @@ func (b *Bill) drawBillTo() {
 
 	b.text(0, 0, "To: ")
 	b.pdf.SetX(20)
-	b.text(0, 0, b.config.BillTo.Email)
+	b.text(0, 0, b.config.BillTo.Name)
 	b.pdf.Ln(5)
 	b.pdf.SetX(20)
-	b.text(0, 0, b.config.BillTo.Name)
+	b.text(0, 0, "c/o " + b.config.BillTo.Person)
 	b.pdf.Ln(5)
 	b.pdf.SetX(20)
 	b.text(0, 0, b.config.BillTo.Street)

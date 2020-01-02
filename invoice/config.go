@@ -40,6 +40,7 @@ func (b *BillDetails) Strings() []string {
 type BillToDetails struct {
 	Email        string
 	Name         string
+	Person       string
 	Street       string
 	CityStateZip string `yaml:"city_state_zip"`
 	Country      string
@@ -100,12 +101,13 @@ type BillingConfig struct {
 	Bank      *BankDetails     `yaml:"bank"`
 	Colors    *BillColor       `yaml:"colors"`
 	OutputDir string
+	AssetsDir string
 }
 
 // ParseConfig parses the YAML config file which contains the settings for the
 // bill we're going to process. It uses a simple FuncMap to template the text,
 // allowing the billing items to describe the current date range.
-func ParseConfig(filename string, billingDate string, outputDir string) (*BillingConfig, error) {
+func ParseConfig(filename string, billingDate string, outputDir string, assetsDir string) (*BillingConfig, error) {
 	billTime := now.New(now.MustParse(billingDate))
 
 	funcMap := template.FuncMap{
@@ -143,6 +145,9 @@ func ParseConfig(filename string, billingDate string, outputDir string) (*Billin
 
   // Set the output dir
   config.OutputDir = outputDir
+
+  // Set the assets dir
+  config.AssetsDir = assetsDir
 
 	return &config, nil
 }
