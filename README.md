@@ -91,4 +91,4 @@ To build it and run it directly from a Docker container you need to:
 
 Note: The config file needs to be in a mounted dir (e.g. invoices).
 
-Note: To use the container in your environment you need to mount/configure the invoices and assets dirs and you probably want to alias the docker run command (e.g. `alias='docker run --volume ${PWD}/billmonger/invoices:/invoices --volume ${PWD}/billmonger/assets:/assets billmonger --output-dir /invoices --assets-dir /assets'`. With that you can run `billmonger --config-file /invoices/billing.example.yaml`
+Note: To use the container in your environment you need to mount/configure the invoices and assets dirs and you probably want to alias the docker run command (e.g. `alias billmonger='docker run --volume ${PWD}/billmonger/invoices:/invoices --volume ${PWD}/billmonger/assets:/assets billmonger --output-dir /invoices --assets-dir /assets'`. With that you can run `billmonger --config-file /invoices/billing.example.yaml`
