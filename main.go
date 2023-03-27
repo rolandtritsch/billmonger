@@ -6,7 +6,7 @@ import (
 
 	"github.com/jinzhu/now"
 	"github.com/relistan/billmonger/invoice"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v1"
 	"gopkg.in/relistan/rubberneck.v1"
 )
 
