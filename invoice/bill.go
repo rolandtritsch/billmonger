@@ -100,13 +100,13 @@ func (b *Bill) makeHeader() func() {
 		b.pdf.SetFont(b.config.Business.SerifFont, "", 12)
 		b.text(20, 0, "Date:")
 		b.lightText()
-		b.text(20, 0, billTime.EndOfMonth().Format("January 2, 2006"))
+		b.text(20, 0, billTime.Format("January 2, 2006"))
 
 		b.pdf.SetXY(140, 55)
 		b.darkText()
 		b.text(20, 0, "Invoice #:")
 		b.lightText()
-		b.text(20, 0, billTime.EndOfMonth().Format("Jan22006"))
+		b.text(20, 0, billTime.Format("Jan22006"))
 
 		// Biller Name, Address
 		b.pdf.SetXY(8, 50)
@@ -160,7 +160,7 @@ func (b *Bill) RenderToFile() error {
 	billTime := now.New(now.MustParse(b.config.Bill.Date))
 
 	outFileName := b.config.OutputDir + "/" + strings.ReplaceAll(b.config.BillTo.Name, " ", "_") +
-		"-" + strings.ToUpper(billTime.EndOfMonth().Format("Jan022006")) + ".pdf"
+		"-" + strings.ToUpper(billTime.Format("Jan022006")) + ".pdf"
 
 	err := b.pdf.OutputFileAndClose(outFileName)
 	if err != nil {
