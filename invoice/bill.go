@@ -1,6 +1,7 @@
 package invoice
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -86,7 +87,7 @@ func (b *Bill) makeHeader() func() {
 		billTime := now.New(now.MustParse(b.config.Bill.Date))
 
 		b.pdf.SetFont(b.config.Business.SansFont, "BI", 28)
-		b.pdf.ImageOptions(b.config.AssetsDir + "/" + b.config.Business.ImageFile, 0, 10, 100, 0, false, gofpdf.ImageOptions{}, 0, "")
+		b.pdf.ImageOptions(b.config.AssetsDir+"/"+b.config.Business.ImageFile, 0, 10, 100, 0, false, gofpdf.ImageOptions{}, 0, "")
 
 		// Invoice Text
 		b.pdf.SetXY(140, 40)
@@ -111,16 +112,18 @@ func (b *Bill) makeHeader() func() {
 		b.pdf.SetXY(8, 50)
 		b.darkText()
 		b.pdf.SetFont(b.config.Business.SerifFont, "B", 14)
-		b.text(40, 0, b.config.Business.Name + " - c/o " + b.config.Business.Person)
+		b.text(40, 0, b.config.Business.Name+" - c/o "+b.config.Business.Person)
 
 		b.pdf.SetFont(b.config.Business.SerifFont, "", 10)
 		b.pdf.SetXY(8, 55)
 		b.text(40, 0, b.config.Business.Address)
+		b.pdf.SetXY(8, 59)
+		b.text(40, 0, "VAT ID: "+b.config.Bill.VATTaxID)
 
 		// Line Break
 		b.pdf.Ln(10)
 		b.darkDrawColor()
-		b.pdf.Line(8, 60, 200, 60)
+		b.pdf.Line(8, 63, 200, 63)
 	}
 }
 
@@ -156,8 +159,8 @@ func (b *Bill) RenderToFile() error {
 	// It's safe to MustParse here because we validate args earlier
 	billTime := now.New(now.MustParse(b.config.Bill.Date))
 
-	outFileName := b.config.OutputDir + "/"+ strings.ReplaceAll(b.config.BillTo.Name, " ", "_") +
-    "-" +	strings.ToUpper(billTime.EndOfMonth().Format("Jan022006")) + ".pdf"
+	outFileName := b.config.OutputDir + "/" + strings.ReplaceAll(b.config.BillTo.Name, " ", "_") +
+		"-" + strings.ToUpper(billTime.EndOfMonth().Format("Jan022006")) + ".pdf"
 
 	err := b.pdf.OutputFileAndClose(outFileName)
 	if err != nil {
@@ -170,7 +173,7 @@ func (b *Bill) RenderToFile() error {
 // drawBillTo renders the Bill To part of the bill.
 func (b *Bill) drawBillTo() {
 	b.blackText()
-	b.pdf.Ln(10)
+	b.pdf.Ln(13)
 	b.pdf.Ln(10)
 
 	b.text(0, 0, "To: ")
@@ -178,7 +181,7 @@ func (b *Bill) drawBillTo() {
 	b.text(0, 0, b.config.BillTo.Name)
 	b.pdf.Ln(5)
 	b.pdf.SetX(20)
-	b.text(0, 0, "c/o " + b.config.BillTo.Person)
+	b.text(0, 0, "c/o "+b.config.BillTo.Person)
 	b.pdf.Ln(5)
 	b.pdf.SetX(20)
 	b.text(0, 0, b.config.BillTo.Street)
@@ -269,21 +272,24 @@ func (b *Bill) drawBillablesTable(headers []string, billables []BillableItem, wi
 	b.textFormat(widths[len(widths)-2], 4, "Subtotal", "1", 0, "R", true, 0, "")
 	b.textFormat(widths[len(widths)-1], 4, subTotalText, "1", 0, "R", true, 0, "")
 
-	// Draw Tax
+	// Draw VAT
+	vatAmount := b.config.Bill.VATAmount(subTotal)
+	vatText := billables[0].Currency + " " + niceFloatStr(vatAmount)
+	vatRate := strconv.FormatFloat(b.config.Bill.VATTaxRate, 'f', -1, 64)
 	b.pdf.Ln(4)
 	b.drawBlanks(billables, widths)
-	b.textFormat(widths[len(widths)-2], 4, "Tax", "1", 0, "R", true, 0, "")
-	b.textFormat(widths[len(widths)-1], 4, "0", "1", 0, "R", true, 0, "")
+	b.textFormat(widths[len(widths)-2], 4, "VAT ("+vatRate+"%)", "1", 0, "R", true, 0, "")
+	b.textFormat(widths[len(widths)-1], 4, vatText, "1", 0, "R", true, 0, "")
 
 	// Draw Total
-	// XXX Total just uses sub-total and assumes €0.00 tax for now...
+	totalText := billables[0].Currency + " " + niceFloatStr(subTotal+vatAmount)
 	b.pdf.Ln(4)
 	b.drawBlanks(billables, widths)
 	b.pdf.SetFont(b.config.Business.SerifFont, "B", 10)
 	y := b.pdf.GetY()
 	x := b.pdf.GetX()
 	b.textFormat(widths[len(widths)-2], 6, "Total", "1", 0, "R", true, 0, "")
-	b.textFormat(widths[len(widths)-1], 6, subTotalText, "1", 0, "R", true, 0, "")
+	b.textFormat(widths[len(widths)-1], 6, totalText, "1", 0, "R", true, 0, "")
 	x2 := b.pdf.GetX()
 
 	b.pdf.SetDrawColor(64, 64, 64)

@@ -16,9 +16,6 @@ are:
  * Everything on the bill is the same currency
  * Filenames will be output in a standard way
 
-Current limitations:
- * It almost has support for tax calculation but it's not there yet
-
 The Problem This Solves
 ------------------------
 
@@ -51,6 +48,37 @@ Examples:
    current month.
  * `{{ billingPeriod }}`: This will be substituted with the current month's
    beginning and end dates.
+
+### VAT
+
+Every invoice must set `vat-tax-id` and `vat-tax-rate` in its `bill` section.
+For an invoice that charges VAT at 23%, use:
+
+```yaml
+bill:
+  vat-tax-id: "IE1234567A"
+  vat-tax-rate: 23
+```
+
+All line-item `unit_price` values are VAT-exclusive. Billmonger adds the line
+totals to calculate the subtotal, applies `vat-tax-rate` to that subtotal, and
+rounds the VAT amount to the nearest cent. The PDF always shows the VAT ID,
+VAT rate, VAT amount, and VAT-inclusive total.
+
+For example, a subtotal of EUR 9,000.00 at a rate of 23 produces VAT of EUR
+2,070.00 and a total of EUR 11,070.00.
+
+To issue an invoice without charging VAT, explicitly use:
+
+```yaml
+bill:
+  vat-tax-id: "-"
+  vat-tax-rate: 0
+```
+
+The PDF will show `VAT ID: -` and a VAT amount of zero. `vat-tax-id` cannot be
+blank. Billmonger also rejects negative rates and rejects a nonzero rate when
+the VAT ID is `-`.
 
 CLI Flags
 ---------

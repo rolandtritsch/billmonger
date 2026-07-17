@@ -3,8 +3,8 @@ package invoice
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"path"
-	"regexp"
 	"strconv"
 	"text/template"
 
@@ -24,17 +24,36 @@ type BusinessDetails struct {
 }
 
 type BillDetails struct {
-	Department   string `yaml:"department"`
-	Currency     string `yaml:"currency"`
-	PaymentTerms string `yaml:"payment_terms"`
-	DueDate      string `yaml:"due_date"`
-	Date         string `yaml:"date"`
+	Department   string  `yaml:"department"`
+	Currency     string  `yaml:"currency"`
+	PaymentTerms string  `yaml:"payment_terms"`
+	DueDate      string  `yaml:"due_date"`
+	VATTaxID     string  `yaml:"vat-tax-id"`
+	VATTaxRate   float64 `yaml:"vat-tax-rate"`
+	Date         string  `yaml:"date"`
 }
 
 func (b *BillDetails) Strings() []string {
 	return []string{
 		b.Department, b.Currency, b.PaymentTerms, b.DueDate,
 	}
+}
+
+func (b *BillDetails) VATAmount(subTotal float64) float64 {
+	return math.Round(subTotal*b.VATTaxRate) / 100
+}
+
+func (b *BillDetails) ValidateVAT() error {
+	if b.VATTaxID == "" {
+		return fmt.Errorf("bill.vat-tax-id cannot be blank; use '-' with vat-tax-rate 0 for an invoice without VAT")
+	}
+	if b.VATTaxRate < 0 {
+		return fmt.Errorf("bill.vat-tax-rate cannot be negative")
+	}
+	if b.VATTaxID == "-" && b.VATTaxRate != 0 {
+		return fmt.Errorf("bill.vat-tax-rate must be 0 when bill.vat-tax-id is '-'")
+	}
+	return nil
 }
 
 type BillToDetails struct {
@@ -140,14 +159,21 @@ func ParseConfig(filename string, billingDate string, outputDir string, assetsDi
 		return nil, err
 	}
 
+	if config.Bill == nil {
+		return nil, fmt.Errorf("bill configuration is required")
+	}
+	if err := config.Bill.ValidateVAT(); err != nil {
+		return nil, err
+	}
+
 	// Set the date we'll bill on
 	config.Bill.Date = billingDate
 
-  // Set the output dir
-  config.OutputDir = outputDir
+	// Set the output dir
+	config.OutputDir = outputDir
 
-  // Set the assets dir
-  config.AssetsDir = assetsDir
+	// Set the assets dir
+	config.AssetsDir = assetsDir
 
 	return &config, nil
 }
@@ -155,13 +181,6 @@ func ParseConfig(filename string, billingDate string, outputDir string, assetsDi
 // niceFloatStr takes a float and gives back a monetary, human-formatted
 // value.
 func niceFloatStr(f float64) string {
-	r := regexp.MustCompile("[0-9,]+.[0-9]{2}")
 	p := message.NewPrinter(language.English)
-	results := r.FindAllString(p.Sprintf("%f", f), 1)
-
-	if len(results) < 1 {
-		panic("got some ridiculous number that has no decimals")
-	}
-
-	return results[0]
+	return p.Sprintf("%.2f", f)
 }

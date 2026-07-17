@@ -8,6 +8,7 @@ ADD . /go/src/github.com/relistan/billmonger
 WORKDIR /go/src/github.com/relistan/billmonger
 RUN go get -u github.com/golang/dep/cmd/dep
 RUN dep ensure
+RUN go test ./...
 RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"'
 
 # --------------------------------------
